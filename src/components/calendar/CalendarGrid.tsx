@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   format, 
   startOfMonth, 
@@ -7,12 +7,16 @@ import {
   endOfWeek, 
   eachDayOfInterval, 
   isSameMonth, 
-  isSameDay 
+  isSameDay,
+  startOfDay,
+  endOfDay,
+  addWeeks,
+  subWeeks
 } from 'date-fns';
 import { useOrderStore } from '../../store/orderStore';
-// import { OrderTag } from './OrderTag';
-import { isDateInRange } from '../../utils/dateUtils';
 import { OrderTag } from './OrderTag';
+import { isDateInRange } from '../../utils/dateUtils';
+import { CalendarNavigation } from './CalendarNavigation';
 
 export const CalendarGrid: React.FC = () => {
   const { 
@@ -20,23 +24,50 @@ export const CalendarGrid: React.FC = () => {
     currentDate, 
     selectedOrder, 
     setSelectedOrder,
-    statusFilter 
+    statusFilter,
+    viewMode 
   } = useOrderStore();
   
   const [hoveredOrder, setHoveredOrder] = useState<string | null>(null);
 
-  // Calculate calendar dates
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const startDate = startOfWeek(monthStart);
-  const endDate = endOfWeek(monthEnd);
-  const days = eachDayOfInterval({ start: startDate, end: endDate });
+  // Calculate calendar dates based on view mode
+  const { days, weekDays } = useMemo(() => {
+    if (viewMode === 'weekly') {
+      const weekStart = startOfWeek(currentDate);
+      const weekEnd = endOfWeek(currentDate);
+      const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+      
+      return {
+        days: weekDays,
+        weekDays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      };
+    } else {
+      const monthStart = startOfMonth(currentDate);
+      const monthEnd = endOfMonth(currentDate);
+      const calendarStart = startOfWeek(monthStart);
+      const calendarEnd = endOfWeek(monthEnd);
+      const monthDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+      
+      return {
+        days: monthDays,
+        weekDays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      };
+    }
+  }, [currentDate, viewMode]);
 
   // Get orders for a specific date
   const getOrdersForDate = (date: Date) => {
-    let filteredOrders = orders.filter(order => 
-      isDateInRange(date, order.startDate, order.endDate)
-    );
+    const dayStart = startOfDay(date);
+    const dayEnd = endOfDay(date);
+    
+    let filteredOrders = orders.filter(order => {
+      const orderStart = new Date(order.startDate);
+      const orderEnd = new Date(order.endDate);
+      
+      // Check if order spans this day
+      return isDateInRange(date, orderStart, orderEnd) ||
+             (orderStart <= dayEnd && orderEnd >= dayStart);
+    });
 
     // Apply status filter if active
     if (statusFilter) {
@@ -56,17 +87,17 @@ export const CalendarGrid: React.FC = () => {
     setHoveredOrder(orderId);
   };
 
-  // Week day headers
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
   return (
-    <div className="bg-white h-full flex flex-col">
+    <div className="bg-white h-full flex flex-col overflow-x-hidden overflow-y-auto">
+      {/* Calendar Navigation */}
+      <CalendarNavigation />
+
       {/* Calendar Header - Week Days */}
       <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
         {weekDays.map(day => (
           <div 
             key={day} 
-            className="p-4 text-center text-sm font-medium text-gray-500 border-r border-gray-200 last:border-r-0"
+            className="p-3 text-center text-sm font-medium text-gray-600 border-r border-gray-200 last:border-r-0"
           >
             {day}
           </div>
@@ -74,10 +105,10 @@ export const CalendarGrid: React.FC = () => {
       </div>
 
       {/* Calendar Days Grid */}
-      <div className="flex-1 grid grid-cols-7 auto-rows-fr">
+      <div className={`flex-1 grid grid-cols-7 ${viewMode === 'weekly' ? 'grid-rows-1' : 'auto-rows-fr'} overflow-x-hidden`}>
         {days.map((day) => {
           const dayOrders = getOrdersForDate(day);
-          const isCurrentMonth = isSameMonth(day, currentDate);
+          const isCurrentMonth = viewMode === 'weekly' ? true : isSameMonth(day, currentDate);
           const isToday = isSameDay(day, new Date());
           const dayNumber = format(day, 'd');
 
@@ -85,10 +116,11 @@ export const CalendarGrid: React.FC = () => {
             <div
               key={day.toISOString()}
               className={`
-                min-h-[120px] p-2 border-r border-b border-gray-200 last:border-r-0
-                relative overflow-hidden
-                ${!isCurrentMonth ? 'bg-gray-50' : 'bg-white'}
-                ${isToday ? 'bg-blue-50 ring-1 ring-blue-200' : ''}
+                ${viewMode === 'weekly' ? 'min-h-[400px]' : 'min-h-[100px]'} 
+                p-2 border-r border-b border-gray-200 last:border-r-0 
+                relative overflow-visible
+                ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'}
+                ${isToday ? 'bg-blue-50 ring-1 ring-blue-300' : ''}
               `}
             >
               {/* Day Number */}
@@ -102,28 +134,29 @@ export const CalendarGrid: React.FC = () => {
               
               {/* Orders for this day */}
               <div className="space-y-1 relative z-10">
-                {dayOrders.slice(0, 4).map(order => (
+                {dayOrders.slice(0, viewMode === 'weekly' ? 10 : 3).map(order => (
                   <OrderTag
-                    key={order.id}
+                    key={`${order.id}-${day.toISOString()}`}
                     order={order}
                     isSelected={selectedOrder === order.id}
                     isHovered={hoveredOrder ? hoveredOrder === order.id : undefined}
                     onHover={handleOrderHover}
                     onClick={handleOrderClick}
+                    compact={viewMode === 'monthly'}
                   />
                 ))}
                 
-                {/* Show "more" indicator if there are more than 4 orders */}
-                {dayOrders.length > 4 && (
-                  <div className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded">
-                    +{dayOrders.length - 4} more
+                {/* Show "more" indicator */}
+                {dayOrders.length > (viewMode === 'weekly' ? 10 : 3) && (
+                  <div className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded cursor-pointer hover:bg-gray-200">
+                    +{dayOrders.length - (viewMode === 'weekly' ? 10 : 3)} more
                   </div>
                 )}
               </div>
 
-              {/* Empty day indicator */}
-              {dayOrders.length === 0 && isCurrentMonth && (
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+              {/* Empty day indicator for current month days */}
+              {dayOrders.length === 0 && isCurrentMonth && !isToday && (
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
                   <div className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
                     No orders
                   </div>

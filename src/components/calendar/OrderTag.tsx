@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { Order } from '../../types';
 
 interface OrderTagProps {
@@ -16,6 +16,36 @@ export const OrderTag: React.FC<OrderTagProps> = ({
   onHover,
   onClick 
 }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const tagRef = useRef<HTMLDivElement>(null);
+
+  const updateTooltipPosition = () => {
+    if (tagRef.current) {
+      const rect = tagRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        top: rect.top - 10, // Position above the tag
+        left: rect.left + rect.width / 2 // Center horizontally
+      });
+    }
+  };
+
+  const handleMouseEnter = () => {
+    setShowTooltip(true);
+    updateTooltipPosition();
+    onHover?.(order.id);
+  };
+
+  const handleMouseLeave = () => {
+    setShowTooltip(false);
+    onHover?.(null);
+  };
+
+  useEffect(() => {
+    if (showTooltip) {
+      updateTooltipPosition();
+    }
+  }, [showTooltip]);
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'completed':
@@ -41,20 +71,22 @@ export const OrderTag: React.FC<OrderTagProps> = ({
   };
 
   return (
-    <div
-      className={`
-        text-xs px-2 py-1 rounded mb-1 cursor-pointer transition-all duration-200 
-        border relative group
-        ${getStatusStyle(order.status)}
-        ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''}
-        ${isHovered !== undefined && !isHovered ? 'opacity-30' : 'opacity-100'}
-        hover:shadow-sm transform hover:scale-[1.02]
-      `}
-      onMouseEnter={() => onHover?.(order.id)}
-      onMouseLeave={() => onHover?.(null)}
-      onClick={handleClick}
-      title={`${order.orderNumber} - ${order.status} (${order.duration} days)`}
-    >
+    <>
+      <div
+        ref={tagRef}
+        className={`
+          text-xs px-2 py-1 rounded mb-1 cursor-pointer transition-all duration-200 
+          border relative group
+          ${getStatusStyle(order.status)}
+          ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''}
+          ${isHovered !== undefined && !isHovered ? 'opacity-30' : 'opacity-100'}
+          hover:shadow-sm transform hover:scale-[1.02]
+        `}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        title={`${order.orderNumber} - ${order.status} (${order.duration} days)`}
+      >
       <div className="flex items-center justify-between">
         <span className="font-medium truncate">
           {order.orderNumber}
@@ -66,21 +98,34 @@ export const OrderTag: React.FC<OrderTagProps> = ({
         )}
       </div>
 
-      {/* Tooltip on hover */}
-      <div className="absolute bottom-full left-0 mb-1 hidden group-hover:block z-50">
-        <div className="bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap shadow-lg">
-          <div className="font-medium">{order.orderNumber}</div>
-          <div className="opacity-75">
-            Status: {order.status} • {order.duration} days
-          </div>
-          <div className="opacity-75">
-            Area: {order.area}
-          </div>
-          <div className="opacity-75">
-            Progress: {order.progress}%
+      </div>
+
+      {/* Fixed positioned tooltip */}
+      {showTooltip && (
+        <div
+          className="fixed z-[9999] pointer-events-none"
+          style={{
+            top: `${tooltipPosition.top}px`,
+            left: `${tooltipPosition.left}px`,
+            transform: 'translate(-50%, -100%)'
+          }}
+        >
+          <div className="bg-gray-900 text-white text-xs rounded py-2 px-3 whitespace-nowrap shadow-xl border border-gray-700 max-w-xs">
+            <div className="font-medium">{order.orderNumber}</div>
+            <div className="opacity-75">
+              Status: {order.status} • {order.duration} days
+            </div>
+            <div className="opacity-75">
+              Area: {order.area}
+            </div>
+            <div className="opacity-75">
+              Progress: {order.progress}%
+            </div>
+            {/* Tooltip arrow */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
