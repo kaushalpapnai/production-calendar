@@ -9,9 +9,7 @@ import {
   isSameMonth, 
   isSameDay,
   startOfDay,
-  endOfDay,
-  addWeeks,
-  subWeeks
+  endOfDay
 } from 'date-fns';
 import { useOrderStore } from '../../store/orderStore';
 import { OrderTag } from './OrderTag';
@@ -88,12 +86,12 @@ export const CalendarGrid: React.FC = () => {
   };
 
   return (
-    <div className="bg-white h-full flex flex-col overflow-x-hidden overflow-y-auto">
+    <div className="bg-white h-full flex flex-col">
       {/* Calendar Navigation */}
       <CalendarNavigation />
 
       {/* Calendar Header - Week Days */}
-      <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
+      <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50 flex-shrink-0">
         {weekDays.map(day => (
           <div 
             key={day} 
@@ -105,7 +103,7 @@ export const CalendarGrid: React.FC = () => {
       </div>
 
       {/* Calendar Days Grid */}
-      <div className={`flex-1 grid grid-cols-7 ${viewMode === 'weekly' ? 'grid-rows-1' : 'auto-rows-fr'} overflow-x-hidden`}>
+      <div className="flex-1 grid grid-cols-7 overflow-scroll">
         {days.map((day) => {
           const dayOrders = getOrdersForDate(day);
           const isCurrentMonth = viewMode === 'weekly' ? true : isSameMonth(day, currentDate);
@@ -116,59 +114,74 @@ export const CalendarGrid: React.FC = () => {
             <div
               key={day.toISOString()}
               className={`
-                ${viewMode === 'weekly' ? 'min-h-[400px]' : 'min-h-[100px]'} 
-                p-2 border-r border-b border-gray-200 last:border-r-0 
-                relative overflow-visible
+                border-r border-b border-gray-200 last:border-r-0
+                relative flex flex-col
                 ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'}
                 ${isToday ? 'bg-blue-50 ring-1 ring-blue-300' : ''}
+                ${viewMode === 'monthly' ? 'min-h-[120px]' : ''}
               `}
             >
-              {/* Day Number */}
+              {/* Day Header - Fixed at top */}
               <div className={`
-                text-sm mb-2 font-medium
+                p-2 text-sm font-medium border-b border-gray-100 flex-shrink-0 bg-inherit
                 ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
                 ${isToday ? 'text-blue-600 font-bold' : ''}
               `}>
-                {dayNumber}
-              </div>
-              
-              {/* Orders for this day */}
-              <div className="space-y-1 relative z-10">
-                {dayOrders.slice(0, viewMode === 'weekly' ? 10 : 3).map(order => (
-                  <OrderTag
-                    key={`${order.id}-${day.toISOString()}`}
-                    order={order}
-                    isSelected={selectedOrder === order.id}
-                    isHovered={hoveredOrder ? hoveredOrder === order.id : undefined}
-                    onHover={handleOrderHover}
-                    onClick={handleOrderClick}
-                    compact={viewMode === 'monthly'}
-                  />
-                ))}
-                
-                {/* Show "more" indicator */}
-                {dayOrders.length > (viewMode === 'weekly' ? 10 : 3) && (
-                  <div className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded cursor-pointer hover:bg-gray-200">
-                    +{dayOrders.length - (viewMode === 'weekly' ? 10 : 3)} more
-                  </div>
-                )}
+                <div className="flex items-center justify-between">
+                  <span>{dayNumber}</span>
+                  {dayOrders.length > 0 && (
+                    <span className="text-xs bg-gray-200 text-gray-600 rounded-full px-1.5 py-0.5 ml-1">
+                      {dayOrders.length}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* Empty day indicator for current month days */}
-              {dayOrders.length === 0 && isCurrentMonth && !isToday && (
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
-                  <div className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                    No orders
-                  </div>
+              {/* Scrollable Orders Container */}
+              <div className={`
+                flex-1 p-2 scrollbar-hide
+                ${viewMode === 'weekly' 
+                  ? 'overflow-y-auto max-h-[calc(100vh-200px)]' 
+                  : dayOrders.length > 3 ? 'overflow-y-auto' : 'overflow-visible'
+                }
+              `}>
+                <div className="space-y-1">
+                  {/* Show all orders in weekly view, limit in monthly */}
+                  {(viewMode === 'weekly' ? dayOrders : dayOrders.slice(0, 3)).map(order => (
+                    <OrderTag
+                      key={`${order.id}-${day.toISOString()}`}
+                      order={order}
+                      isSelected={selectedOrder === order.id}
+                      isHovered={hoveredOrder ? hoveredOrder === order.id : undefined}
+                      onHover={handleOrderHover}
+                      onClick={handleOrderClick}
+                      compact={viewMode === 'monthly'}
+                      viewMode={viewMode}
+                    />
+                  ))}
+                  
+                  {/* Show "more" indicator only in monthly view */}
+                  {viewMode === 'monthly' && dayOrders.length > 3 && (
+                    <div className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded cursor-pointer hover:bg-gray-200 transition-colors">
+                      +{dayOrders.length - 3} more
+                    </div>
+                  )}
+
+                  {/* Empty state */}
+                  {dayOrders.length === 0 && isCurrentMonth && (
+                    <div className="text-xs text-gray-400 text-center py-8 opacity-50">
+                      No orders
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
       </div>
 
       {/* Calendar Legend/Status Bar */}
-      <div className="border-t border-gray-200 bg-gray-50 px-6 py-2">
+      <div className="border-t border-gray-200 bg-gray-50 px-6 py-2 flex-shrink-0">
         <div className="flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
@@ -194,6 +207,7 @@ export const CalendarGrid: React.FC = () => {
             {statusFilter && (
               <span>• Filtered: {orders.filter(o => o.status === statusFilter).length}</span>
             )}
+            <span>• {viewMode === 'weekly' ? 'Weekly View' : 'Monthly View'}</span>
           </div>
         </div>
       </div>
