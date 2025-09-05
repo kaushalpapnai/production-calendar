@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import type { Order } from '../../types';
 
 interface OrderTagProps {
@@ -7,6 +7,8 @@ interface OrderTagProps {
   isHovered?: boolean;
   onHover?: (orderId: string | null) => void;
   onClick?: (orderId: string) => void;
+  compact?: boolean;
+  viewMode?: 'monthly' | 'weekly';
 }
 
 export const OrderTag: React.FC<OrderTagProps> = ({ 
@@ -14,55 +16,48 @@ export const OrderTag: React.FC<OrderTagProps> = ({
   isSelected, 
   isHovered,
   onHover,
-  onClick 
+  onClick,
+  compact = false,
+  viewMode = 'monthly'
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
-  const tagRef = useRef<HTMLDivElement>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const orderTagRef = useRef<HTMLDivElement>(null);
 
-  const updateTooltipPosition = () => {
-    if (tagRef.current) {
-      const rect = tagRef.current.getBoundingClientRect();
-      setTooltipPosition({
-        top: rect.top - 10, // Position above the tag
-        left: rect.left + rect.width / 2 // Center horizontally
-      });
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-500 text-white';
+      case 'in-progress':
+        return 'bg-blue-500 text-white';
+      case 'cancelled':
+        return 'bg-gray-400 text-white';
+      case 'planned':
+        return 'bg-yellow-500 text-gray-800';
+      case 'pending':
+        return 'bg-yellow-500 text-gray-800';
+      case 'approved':
+        return 'bg-green-500 text-white';
+      default:
+        return 'bg-gray-400 text-white';
     }
   };
 
   const handleMouseEnter = () => {
-    setShowTooltip(true);
-    updateTooltipPosition();
-    onHover?.(order.id);
+    if (orderTagRef.current) {
+      const rect = orderTagRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top - 10
+      });
+      setShowTooltip(true);
+      onHover?.(order.id);
+    }
   };
 
   const handleMouseLeave = () => {
     setShowTooltip(false);
-    onHover?.(null);
-  };
-
-  useEffect(() => {
-    if (showTooltip) {
-      updateTooltipPosition();
-    }
-  }, [showTooltip]);
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-500 text-white border-green-500';
-      case 'in-progress':
-        return 'bg-blue-500 text-white border-blue-500';
-      case 'cancelled':
-        return 'bg-gray-500 text-white border-gray-500';
-      case 'planned':
-        return 'border-2 border-yellow-500 text-yellow-700 bg-yellow-50';
-      case 'pending':
-        return 'border-2 border-yellow-500 text-yellow-700 bg-yellow-50';
-      case 'approved':
-        return 'bg-green-500 text-white border-green-500';
-      default:
-        return 'bg-gray-200 text-gray-700 border-gray-200';
-    }
+      onHover?.(null);
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -70,60 +65,68 @@ export const OrderTag: React.FC<OrderTagProps> = ({
     onClick?.(order.id);
   };
 
+  // Split order number to show prefix and actual number separately
+  const orderParts = order.orderNumber.split(' ');
+  const prefix = orderParts[0]; // e.g., "#3A"
+  const actualOrderNumber = orderParts[1] || ''; // e.g., "331BD93A"
+
   return (
     <>
       <div
-        ref={tagRef}
+        ref={orderTagRef}
         className={`
-          text-xs px-2 py-1 rounded mb-1 cursor-pointer transition-all duration-200 
-          border relative group
+          ${compact || viewMode === 'monthly' ? 'text-xs px-0 py-0' : 'text-xs px-0 py-0'} 
+          rounded mb-1 cursor-pointer transition-all duration-200 
+          relative overflow-hidden
           ${getStatusStyle(order.status)}
-          ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''}
-          ${isHovered !== undefined && !isHovered ? 'opacity-30' : 'opacity-100'}
-          hover:shadow-sm transform hover:scale-[1.02]
+          ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1 shadow-lg' : 'shadow-md'}
+          ${isHovered !== undefined && !isHovered ? 'opacity-40' : 'opacity-100'}
+          hover:shadow-lg transform hover:scale-[1.02] hover:z-50
         `}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
-        title={`${order.orderNumber} - ${order.status} (${order.duration} days)`}
       >
-      <div className="flex items-center justify-between">
-        <span className="font-medium truncate">
-          {order.orderNumber}
-        </span>
-        {order.progress > 0 && (
-          <span className="text-[10px] ml-1 opacity-75">
-            {order.progress}%
+        {/* Order number display with prefix background */}
+        <div className="flex items-center h-full">
+          <span className="font-bold bg-white text-gray-800 px-1 ml-1 h-full flex items-center">
+            {prefix}
           </span>
+          <span className="font-medium px-1 py-1">
+            {actualOrderNumber}
+          </span>
+        </div>
+
+        {/* Show additional info in weekly view only */}
+        {viewMode === 'weekly' && !compact && (
+          <div className="mt-1 text-[10px] opacity-75 space-y-0.5 px-2 pb-1">
+            <div className="truncate">{order.area}</div>
+            <div className="truncate">{order.assignee}</div>
+            <div className="truncate capitalize">{order.status.replace('-', ' ')}</div>
+          </div>
         )}
       </div>
 
-      </div>
-
-      {/* Fixed positioned tooltip */}
+      {/* Enhanced Tooltip */}
       {showTooltip && (
-        <div
-          className="fixed z-[9999] pointer-events-none"
+        <div 
+          className="fixed bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-2xl border border-gray-700 whitespace-nowrap pointer-events-none"
           style={{
-            top: `${tooltipPosition.top}px`,
-            left: `${tooltipPosition.left}px`,
-            transform: 'translate(-50%, -100%)'
+            left: tooltipPosition.x,
+            top: tooltipPosition.y,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 9999
           }}
         >
-          <div className="bg-gray-900 text-white text-xs rounded py-2 px-3 whitespace-nowrap shadow-xl border border-gray-700 max-w-xs">
-            <div className="font-medium">{order.orderNumber}</div>
-            <div className="opacity-75">
-              Status: {order.status} • {order.duration} days
-            </div>
-            <div className="opacity-75">
-              Area: {order.area}
-            </div>
-            <div className="opacity-75">
-              Progress: {order.progress}%
-            </div>
-            {/* Tooltip arrow */}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          <div className="font-semibold text-white mb-1">{order.orderNumber}</div>
+          <div className="text-gray-300 space-y-0.5">
+            <div>Status: <span className="text-white capitalize">{order.status.replace('-', ' ')}</span></div>
+            <div>Duration: <span className="text-white">{order.duration} days</span></div>
+            <div>Area: <span className="text-white">{order.area}</span></div>
+            <div>Assignee: <span className="text-white">{order.assignee}</span></div>
+            <div>Progress: <span className="text-white">{order.progress}%</span></div>
           </div>
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-gray-900"></div>
         </div>
       )}
     </>

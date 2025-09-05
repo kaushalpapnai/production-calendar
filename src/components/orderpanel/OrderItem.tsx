@@ -55,13 +55,13 @@ export const OrderItem: React.FC<{
   return (
     <div
       className={`grid grid-cols-4 gap-4 p-4 cursor-pointer hover:bg-gray-50 border-b border-gray-100 ${
-        isSelected ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+        isSelected ? 'bg-blue-50 border-l-4 border-l-gray-500' : ''
       }`}
       onClick={() => onClick(order.id)}
     >
       {/* Plan/Order */}
       <div className="flex items-center space-x-2">
-        <span className="text-sm font-medium text-blue-600">#{index}</span>
+        <span className="text-sm text-gray-500">#{index}</span>
         <span className="text-sm font-medium text-gray-900">{order.orderNumber}</span>
       </div>
 

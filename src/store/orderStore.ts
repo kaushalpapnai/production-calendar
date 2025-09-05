@@ -11,13 +11,30 @@ const statusColors: Record<OrderStatus, string> = {
   'approved': '#10B981'
 };
 
-const generateOrderNumber = (): string => {
+// Generate a random order number (8 characters)
+const generateRandomOrderNumber = (): string => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '#';
+  let result = '';
   for (let i = 0; i < 8; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+};
+
+// Generate area-specific prefix + order number combination
+const generateFullOrderNumber = (area: string, existingOrders: Order[]): string => {
+  // Get area prefix (first letter of area)
+  const areaPrefix = area.charAt(0).toUpperCase();
+  
+  // Count existing orders in this area for sequential numbering
+  const areaOrders = existingOrders.filter(order => order.area === area);
+  const orderCount = areaOrders.length + 1;
+  
+  // Generate random order number
+  const randomOrderNumber = generateRandomOrderNumber();
+  
+  // Return: #[sequential][area_prefix] + space + random_order_number
+  return `#${orderCount}${areaPrefix} ${randomOrderNumber}`;
 };
 
 export const useOrderStore = create<OrderStore>()(
@@ -30,10 +47,11 @@ export const useOrderStore = create<OrderStore>()(
       statusFilter: null,
 
       addOrder: (orderData) => {
+        const state = get();
         const newOrder: Order = {
           ...orderData,
           id: crypto.randomUUID(),
-          orderNumber: generateOrderNumber(),
+          orderNumber: generateFullOrderNumber(orderData.area, state.orders),
           colorCode: statusColors[orderData.status],
         };
 
@@ -65,6 +83,19 @@ export const useOrderStore = create<OrderStore>()(
     }),
     {
       name: 'production-orders',
+      serialize: (state) => JSON.stringify(state),
+      deserialize: (str) => {
+        const parsed = JSON.parse(str);
+        return {
+          ...parsed,
+          orders: parsed.orders?.map((order: any) => ({
+            ...order,
+            startDate: typeof order.startDate === 'string' ? new Date(order.startDate) : order.startDate,
+            endDate: typeof order.endDate === 'string' ? new Date(order.endDate) : order.endDate,
+          })) || [],
+          currentDate: new Date(parsed.currentDate || new Date()),
+        };
+      },
     }
   )
 );

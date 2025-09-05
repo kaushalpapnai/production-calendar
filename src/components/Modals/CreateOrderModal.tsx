@@ -69,9 +69,12 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     }
   }, [isOpen]);
 
-  // Check for order collisions
-  const checkCollision = (startDate: Date, endDate: Date): boolean => {
+  // Updated conflict logic - only check same area
+  const checkAreaConflict = (startDate: Date, endDate: Date, area: string): boolean => {
     return orders.some(order => {
+      // Only check orders in the same area
+      if (order.area !== area) return false;
+      
       const orderStart = new Date(order.startDate);
       const orderEnd = new Date(order.endDate);
       
@@ -112,10 +115,10 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       newErrors.assignee = 'Please select an assignee';
     }
 
-    // Collision detection
-    if (!newErrors.startDate && !newErrors.endDate) {
-      if (checkCollision(startDate, endDate)) {
-        newErrors.collision = 'Order conflicts with existing order in the same time range';
+    // Area-based collision detection
+    if (!newErrors.startDate && !newErrors.endDate && formData.area) {
+      if (checkAreaConflict(startDate, endDate, formData.area)) {
+        newErrors.collision = `Order conflicts with existing order in the same area (${formData.area})`;
       }
     }
 
@@ -142,7 +145,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
         startDate,
         endDate,
         duration,
-        orderNumber: '', // Will be generated in store
+        orderNumber: '', // Will be generated in store with area prefix
         colorCode: '' // Will be set in store
       });
 
@@ -176,6 +179,11 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       }
     }
     return 0;
+  };
+
+  // Show how many orders exist in selected area
+  const getAreaOrderCount = (area: string) => {
+    return orders.filter(order => order.area === area).length;
   };
 
   if (!isOpen) return null;
@@ -299,12 +307,20 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             >
               <option value="">Select Production Area</option>
               {areas.map(area => (
-                <option key={area} value={area}>{area}</option>
+                <option key={area} value={area}>
+                  {area} ({getAreaOrderCount(area)} existing orders)
+                </option>
               ))}
             </select>
             {errors.area && (
               <p className="mt-1 text-sm text-red-600">{errors.area}</p>
             )}
+           {formData.area && (
+  <p className="mt-1 text-sm text-gray-500">
+    Next order will be: <strong>#{getAreaOrderCount(formData.area) + 1}{formData.area.charAt(0)} [8-digit-code]</strong>
+  </p>
+)}
+
           </div>
 
           {/* Assignee */}
