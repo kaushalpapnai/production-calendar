@@ -55,7 +55,6 @@ git clone https://github.com/your-username/production-calendar.git
 cd production-calendar
 npm install
 npm run dev
-```
 
 ### Build
 
