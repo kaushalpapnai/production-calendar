@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Calendar, MapPin, User, AlertCircle } from 'lucide-react';
 import { useOrderStore } from '../../store/orderStore';
 import { calculateDuration } from '../../utils/dateUtils';
@@ -40,6 +40,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   onClose 
 }) => {
   const { addOrder, orders } = useOrderStore();
+  const modalRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState({
     status: 'planned' as OrderStatus,
@@ -52,6 +53,32 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Handle click outside to close modal
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      onClose();
+    }
+  };
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscapeKey);
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -189,10 +216,23 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
+      }}
+      onClick={handleBackdropClick}
+    >
+      <div 
+        ref={modalRef}
+        className="bg-white rounded-lg w-full max-w-md mx-auto shadow-2xl flex flex-col animate-in zoom-in duration-200"
+        style={{ maxHeight: '90vh' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200 bg-white rounded-t-lg">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Create New Order</h2>
             <p className="text-sm text-gray-500 mt-1">
@@ -208,188 +248,190 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Global Error */}
-          {(errors.submit || errors.collision) && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-start space-x-2">
-              <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-              <span className="text-sm">{errors.submit || errors.collision}</span>
-            </div>
-          )}
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => handleInputChange('status', e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={isSubmitting}
-            >
-              <option value="planned">Planned</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="in-progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Calendar size={16} className="inline mr-1" />
-                Start Date
-              </label>
-              <input
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => handleInputChange('startDate', e.target.value)}
-                className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.startDate ? 'border-red-300' : 'border-gray-300'
-                }`}
-                disabled={isSubmitting}
-                required
-              />
-              {errors.startDate && (
-                <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Calendar size={16} className="inline mr-1" />
-                End Date
-              </label>
-              <input
-                type="date"
-                value={formData.endDate}
-                onChange={(e) => handleInputChange('endDate', e.target.value)}
-                className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.endDate ? 'border-red-300' : 'border-gray-300'
-                }`}
-                disabled={isSubmitting}
-                required
-              />
-              {errors.endDate && (
-                <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Duration Display */}
-          {formData.startDate && formData.endDate && !errors.startDate && !errors.endDate && (
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-              <div className="text-sm text-blue-700">
-                <strong>Duration:</strong> {calculateDisplayDuration()} day{calculateDisplayDuration() !== 1 ? 's' : ''}
+        {/* Scrollable Form Content */}
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Global Error */}
+            {(errors.submit || errors.collision) && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-start space-x-2">
+                <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                <span className="text-sm">{errors.submit || errors.collision}</span>
               </div>
-            </div>
-          )}
-
-          {/* Area */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <MapPin size={16} className="inline mr-1" />
-              Production Area
-            </label>
-            <select
-              value={formData.area}
-              onChange={(e) => handleInputChange('area', e.target.value)}
-              className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.area ? 'border-red-300' : 'border-gray-300'
-              }`}
-              disabled={isSubmitting}
-              required
-            >
-              <option value="">Select Production Area</option>
-              {areas.map(area => (
-                <option key={area} value={area}>
-                  {area} ({getAreaOrderCount(area)} existing orders)
-                </option>
-              ))}
-            </select>
-            {errors.area && (
-              <p className="mt-1 text-sm text-red-600">{errors.area}</p>
             )}
-           {formData.area && (
-  <p className="mt-1 text-sm text-gray-500">
-    Next order will be: <strong>#{getAreaOrderCount(formData.area) + 1}{formData.area.charAt(0)} [8-digit-code]</strong>
-  </p>
-)}
 
-          </div>
-
-          {/* Assignee */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <User size={16} className="inline mr-1" />
-              Assignee
-            </label>
-            <select
-              value={formData.assignee}
-              onChange={(e) => handleInputChange('assignee', e.target.value)}
-              className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.assignee ? 'border-red-300' : 'border-gray-300'
-              }`}
-              disabled={isSubmitting}
-              required
-            >
-              <option value="">Select Assignee</option>
-              {assignees.map(assignee => (
-                <option key={assignee} value={assignee}>{assignee}</option>
-              ))}
-            </select>
-            {errors.assignee && (
-              <p className="mt-1 text-sm text-red-600">{errors.assignee}</p>
-            )}
-          </div>
-
-          {/* Progress (for non-planned orders) */}
-          {formData.status !== 'planned' && (
+            {/* Status */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Initial Progress
+                Status
               </label>
-              <div className="flex items-center space-x-3">
+              <select
+                value={formData.status}
+                onChange={(e) => handleInputChange('status', e.target.value as OrderStatus)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isSubmitting}
+              >
+                <option value="planned">Planned</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            {/* Date Range */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Calendar size={16} className="inline mr-1" />
+                  Start Date
+                </label>
                 <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={formData.progress}
-                  onChange={(e) => handleInputChange('progress', parseInt(e.target.value))}
-                  className="flex-1"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.startDate ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   disabled={isSubmitting}
+                  required
                 />
-                <span className="text-sm font-medium text-gray-900 w-12 text-right">
-                  {formData.progress}%
-                </span>
+                {errors.startDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Calendar size={16} className="inline mr-1" />
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.endDate ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  disabled={isSubmitting}
+                  required
+                />
+                {errors.endDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
+                )}
               </div>
             </div>
-          )}
 
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Creating...' : 'Create Order'}
-            </button>
-          </div>
-        </form>
+            {/* Duration Display */}
+            {formData.startDate && formData.endDate && !errors.startDate && !errors.endDate && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <div className="text-sm text-blue-700">
+                  <strong>Duration:</strong> {calculateDisplayDuration()} day{calculateDisplayDuration() !== 1 ? 's' : ''}
+                </div>
+              </div>
+            )}
+
+            {/* Area */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <MapPin size={16} className="inline mr-1" />
+                Production Area
+              </label>
+              <select
+                value={formData.area}
+                onChange={(e) => handleInputChange('area', e.target.value)}
+                className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.area ? 'border-red-300' : 'border-gray-300'
+                }`}
+                disabled={isSubmitting}
+                required
+              >
+                <option value="">Select Production Area</option>
+                {areas.map(area => (
+                  <option key={area} value={area}>
+                    {area} ({getAreaOrderCount(area)} existing orders)
+                  </option>
+                ))}
+              </select>
+              {errors.area && (
+                <p className="mt-1 text-sm text-red-600">{errors.area}</p>
+              )}
+              {formData.area && (
+                <p className="mt-1 text-sm text-gray-500">
+                  Next order will be: <strong>#{getAreaOrderCount(formData.area) + 1}{formData.area.charAt(0)} [8-digit-code]</strong>
+                </p>
+              )}
+            </div>
+
+            {/* Assignee */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <User size={16} className="inline mr-1" />
+                Assignee
+              </label>
+              <select
+                value={formData.assignee}
+                onChange={(e) => handleInputChange('assignee', e.target.value)}
+                className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.assignee ? 'border-red-300' : 'border-gray-300'
+                }`}
+                disabled={isSubmitting}
+                required
+              >
+                <option value="">Select Assignee</option>
+                {assignees.map(assignee => (
+                  <option key={assignee} value={assignee}>{assignee}</option>
+                ))}
+              </select>
+              {errors.assignee && (
+                <p className="mt-1 text-sm text-red-600">{errors.assignee}</p>
+              )}
+            </div>
+
+            {/* Progress (for non-planned orders) */}
+            {formData.status !== 'planned' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Initial Progress
+                </label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={formData.progress}
+                    onChange={(e) => handleInputChange('progress', parseInt(e.target.value))}
+                    className="flex-1"
+                    disabled={isSubmitting}
+                  />
+                  <span className="text-sm font-medium text-gray-900 w-12 text-right">
+                    {formData.progress}%
+                  </span>
+                </div>
+              </div>
+            )}
+          </form>
+        </div>
+
+        {/* Fixed Footer */}
+        <div className="flex-shrink-0 flex justify-end space-x-3 p-6 border-t border-gray-200 bg-white rounded-b-lg">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Creating...' : 'Create Order'}
+          </button>
+        </div>
       </div>
     </div>
   );
