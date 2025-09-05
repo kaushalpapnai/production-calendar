@@ -30,7 +30,7 @@ export const CalendarNavigation: React.FC = () => {
             <ChevronLeft size={20} />
           </button>
           
-          <h2 className="text-xl font-semibold text-gray-900 min-w-[160px] text-left">
+          <h2 className="text-xl font-semibold text-gray-900 min-w-[120px] text-center">
             {format(currentDate, 'MMMM yyyy')}
           </h2>
           
@@ -45,19 +45,27 @@ export const CalendarNavigation: React.FC = () => {
       </div>
 
       {/* View Controls */}
-      <div className="flex items-center space-x-4">
-        <select
-          value={viewMode}
-          onChange={(e) => setViewMode(e.target.value as 'monthly' | 'weekly')}
-          className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="monthly">Monthly</option>
-          <option value="weekly">Weekly</option>
-        </select>
+      <div className="flex items-center space-x-3">
+        {/* Custom View Mode Selector */}
+        <div className="relative inline-block">
+          <select
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value as 'monthly' | 'weekly')}
+            className="appearance-none bg-white border border-gray-300 rounded px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+          >
+            <option value="monthly">Monthly</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+            </svg>
+          </div>
+        </div>
 
         <button
           onClick={goToThisMonth}
-          className="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
+          className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors border border-gray-300"
         >
           This Month
         </button>

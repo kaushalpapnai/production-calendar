@@ -132,7 +132,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             {/* Active Filter Display */}
             {statusFilter && (
               <div className="flex items-center space-x-2 bg-blue-50 border border-blue-200 rounded px-3 py-1">
-                <span className="text-sm font-medium text-blue-700">
+                <span className="text-sm font-medium text-blue-900">
                   Showing {getFilteredCount(statusFilter)} {currentFilter?.label?.toLowerCase()} orders
                 </span>
                 <button
@@ -147,10 +147,10 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
 
           <button
             onClick={onCreateOrder}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            className="flex items-center space-x-2 bg-blue-900 text-white px-4 py-2 rounded-md hover:bg-blue-800 cursor-pointer transition-colors"
           >
-            <Plus size={16} />
             <span>Create Order</span>
+            <Plus size={16} />
           </button>
         </div>
       </div>
