@@ -10,7 +10,7 @@ function App() {
 
   return (
     <div className="h-screen bg-gray-100 overflow-scroll">
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col mb-40">
         <CalendarHeader
           onCreateOrder={() => setIsCreateModalOpen(true)}
           onToggleFilter={() => setIsFilterOpen(!isFilterOpen)}

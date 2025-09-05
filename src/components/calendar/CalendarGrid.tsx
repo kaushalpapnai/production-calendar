@@ -116,7 +116,7 @@ export const CalendarGrid: React.FC = () => {
   };
 
   return (
-    <div className="bg-white h-full flex flex-col overflow-y-hidden">
+    <div className="bg-white h-full flex flex-col overflow-hidden">
       {/* Calendar Navigation */}
       <CalendarNavigation />
 
@@ -176,7 +176,7 @@ export const CalendarGrid: React.FC = () => {
 
       {/* DIFFERENT LAYOUTS FOR WEEKLY VS MONTHLY */}
       {viewMode === 'weekly' ? (
-        /* WEEKLY VIEW - Full Week Display */
+        /* WEEKLY VIEW - Fixed Height for All Containers */
         <div className="flex-1 grid grid-cols-7">
           {days.map((day) => {
             const dayOrders = getOrdersForDate(day);
@@ -188,11 +188,10 @@ export const CalendarGrid: React.FC = () => {
               <div
                 key={day.toISOString()}
                 className={`
-                  border-r border-b border-gray-200 last:border-r-0 flex flex-col
+                  border-r border-b border-gray-200 last:border-r-0 flex flex-col h-[500px]
                   ${isToday ? 'bg-blue-50 ring-2 ring-blue-300' : 'bg-white'}
                   ${!isCurrentMonth ? 'bg-gray-50' : ''}
                 `}
-                style={{ minHeight: '500px' }}
               >
                 {/* Day Header - Fixed */}
                 <div className={`
@@ -211,8 +210,8 @@ export const CalendarGrid: React.FC = () => {
                   )}
                 </div>
 
-                {/* Scrollable Orders Container */}
-                <div className="flex-1 p-3 overflow-y-auto scrollbar-container">
+                {/* Orders Container - Takes remaining space */}
+                <div className="flex-1 p-3 overflow-y-auto scrollbar-hide">
                   <div className="space-y-2">
                     {dayOrders.map(order => (
                       <OrderTag
@@ -222,7 +221,6 @@ export const CalendarGrid: React.FC = () => {
                         isHovered={hoveredOrder ? hoveredOrder === order.id : undefined}
                         onHover={handleOrderHover}
                         onClick={handleOrderClick}
-                        // viewMode="weekly"
                       />
                     ))}
 
@@ -238,8 +236,8 @@ export const CalendarGrid: React.FC = () => {
           })}
         </div>
       ) : (
-        /* MONTHLY VIEW - Grid Layout */
-        <div className="flex-1 grid grid-cols-7 auto-rows-fr ">
+        /* MONTHLY VIEW - Grid Layout with Dynamic Height */
+        <div className="flex-1 grid grid-cols-7 auto-rows-min gap-0">
           {days.map((day) => {
             const dayOrders = getOrdersForDate(day);
             const isCurrentMonth = isSameMonth(day, currentDate);
@@ -250,11 +248,14 @@ export const CalendarGrid: React.FC = () => {
               <div
                 key={day.toISOString()}
                 className={`
-                  min-h-[120px] border-r border-b border-gray-200 last:border-r-0
-                  relative flex flex-col
+                  border-r border-b border-gray-200 last:border-r-0 flex flex-col
                   ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'}
                   ${isToday ? 'bg-blue-50 ring-1 ring-blue-300' : ''}
                 `}
+                style={{
+                  minHeight: dayOrders.length > 0 ? 'fit-content' : '120px',
+                  height: 'auto'
+                }}
               >
                 <div className={`
                   p-2 text-sm font-medium border-b border-gray-100 flex-shrink-0 bg-inherit
@@ -271,9 +272,10 @@ export const CalendarGrid: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex-1 p-2 scrollbar-hide">
+                <div className="flex-1 p-2">
                   <div className="space-y-1">
-                    {dayOrders.slice(0, 3).map(order => (
+                    {/* Show ALL orders, not just first 3 */}
+                    {dayOrders.map(order => (
                       <OrderTag
                         key={`${order.id}-${day.toISOString()}`}
                         order={order}
@@ -283,12 +285,6 @@ export const CalendarGrid: React.FC = () => {
                         onClick={handleOrderClick}
                       />
                     ))}
-                    
-                    {dayOrders.length > 3 && (
-                      <div className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded cursor-pointer hover:bg-gray-200 transition-colors">
-                        +{dayOrders.length - 3} more
-                      </div>
-                    )}
 
                     {dayOrders.length === 0 && isCurrentMonth && (
                       <div className="text-xs text-gray-400 text-center py-8 opacity-50">
