@@ -179,6 +179,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       onClose();
     } catch (error) {
       setErrors({ submit: 'Failed to create order. Please try again.' });
+      console.log(error)
     } finally {
       setIsSubmitting(false);
     }

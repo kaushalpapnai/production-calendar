@@ -1,5 +1,6 @@
 import React from 'react';
 import { StatusBadge } from "../UI/StatusBadge";
+import type { Order } from '../../types';
 
 const ProgressCircle: React.FC<{ progress: number; status: string }> = ({ progress, status }) => {
   const getCircleColor = (status: string) => {
@@ -47,7 +48,7 @@ const ProgressCircle: React.FC<{ progress: number; status: string }> = ({ progre
 };
 
 export const OrderItem: React.FC<{
-  order: any;
+  order: Order;
   isSelected: boolean;
   onClick: (id: string) => void;
   index: number;

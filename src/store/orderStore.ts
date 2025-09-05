@@ -83,18 +83,26 @@ export const useOrderStore = create<OrderStore>()(
     }),
     {
       name: 'production-orders',
-      serialize: (state) => JSON.stringify(state),
-      deserialize: (str) => {
-        const parsed = JSON.parse(str);
-        return {
-          ...parsed,
-          orders: parsed.orders?.map((order: any) => ({
-            ...order,
-            startDate: typeof order.startDate === 'string' ? new Date(order.startDate) : order.startDate,
-            endDate: typeof order.endDate === 'string' ? new Date(order.endDate) : order.endDate,
-          })) || [],
-          currentDate: new Date(parsed.currentDate || new Date()),
-        };
+      storage: {
+        getItem: (name) => {
+          const str = localStorage.getItem(name);
+          if (!str) return null;
+          
+          const parsed = JSON.parse(str);
+          return {
+            ...parsed.state,
+            orders: parsed.state.orders?.map((order: Order) => ({
+              ...order,
+              startDate: typeof order.startDate === 'string' ? new Date(order.startDate) : order.startDate,
+              endDate: typeof order.endDate === 'string' ? new Date(order.endDate) : order.endDate,
+            })) || [],
+            currentDate: new Date(parsed.state.currentDate || new Date()),
+          };
+        },
+        setItem: (name, value) => {
+          localStorage.setItem(name, JSON.stringify({ state: value }));
+        },
+        removeItem: (name) => localStorage.removeItem(name),
       },
     }
   )

@@ -1,4 +1,4 @@
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 
 export const getMonthDays = (date: Date) => {
   const start = startOfMonth(date);
