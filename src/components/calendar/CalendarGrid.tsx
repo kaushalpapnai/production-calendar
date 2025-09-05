@@ -10,8 +10,6 @@ import {
   isSameDay,
   startOfDay,
   endOfDay,
-  addWeeks,
-  subWeeks,
   eachWeekOfInterval
 } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -118,7 +116,7 @@ export const CalendarGrid: React.FC = () => {
   };
 
   return (
-    <div className="bg-white h-full flex flex-col">
+    <div className="bg-white h-full flex flex-col overflow-y-hidden">
       {/* Calendar Navigation */}
       <CalendarNavigation />
 
@@ -224,8 +222,7 @@ export const CalendarGrid: React.FC = () => {
                         isHovered={hoveredOrder ? hoveredOrder === order.id : undefined}
                         onHover={handleOrderHover}
                         onClick={handleOrderClick}
-                        compact={false}
-                        viewMode="weekly"
+                        // viewMode="weekly"
                       />
                     ))}
 
@@ -242,7 +239,7 @@ export const CalendarGrid: React.FC = () => {
         </div>
       ) : (
         /* MONTHLY VIEW - Grid Layout */
-        <div className="flex-1 grid grid-cols-7 auto-rows-fr">
+        <div className="flex-1 grid grid-cols-7 auto-rows-fr ">
           {days.map((day) => {
             const dayOrders = getOrdersForDate(day);
             const isCurrentMonth = isSameMonth(day, currentDate);
@@ -274,7 +271,7 @@ export const CalendarGrid: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex-1 p-2 overflow-y-auto scrollbar-hide">
+                <div className="flex-1 p-2 scrollbar-hide">
                   <div className="space-y-1">
                     {dayOrders.slice(0, 3).map(order => (
                       <OrderTag
@@ -284,8 +281,6 @@ export const CalendarGrid: React.FC = () => {
                         isHovered={hoveredOrder ? hoveredOrder === order.id : undefined}
                         onHover={handleOrderHover}
                         onClick={handleOrderClick}
-                        compact={true}
-                        viewMode="monthly"
                       />
                     ))}
                     

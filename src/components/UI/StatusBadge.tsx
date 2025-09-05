@@ -1,68 +1,26 @@
-import React from 'react';
-import type { OrderStatus } from '../../types';
+export const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border border-yellow-300';
+      case 'completed':
+        return 'bg-green-100 text-green-800 border border-green-300';
+      case 'approved':
+        return 'bg-green-100 text-green-800 border border-green-300';
+      case 'in-progress':
+        return 'bg-cyan-100 text-cyan-800 border border-cyan-300';
+      case 'planned':
+        return 'bg-purple-100 text-purple-800 border border-purple-300';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border border-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 border border-gray-300';
+    }
+  };
 
-interface StatusBadgeProps {
-  status: OrderStatus;
-  className?: string;
-}
-
-const statusConfig: Record<OrderStatus, { 
-  color: string; 
-  bgColor: string; 
-  text: string;
-  dotColor: string;
-}> = {
-  'completed': { 
-    color: 'text-green-800', 
-    bgColor: 'bg-green-100', 
-    text: 'COMPLETE',
-    dotColor: 'bg-green-500'
-  },
-  'in-progress': { 
-    color: 'text-blue-800', 
-    bgColor: 'bg-blue-100', 
-    text: 'IN PROGRESS',
-    dotColor: 'bg-blue-500'
-  },
-  'cancelled': { 
-    color: 'text-gray-800', 
-    bgColor: 'bg-gray-100', 
-    text: 'CANCELLED',
-    dotColor: 'bg-gray-500'
-  },
-  'planned': { 
-    color: 'text-yellow-800', 
-    bgColor: 'bg-yellow-100', 
-    text: 'PLANNED',
-    dotColor: 'bg-yellow-500'
-  },
-  'pending': { 
-    color: 'text-yellow-800', 
-    bgColor: 'bg-yellow-100', 
-    text: 'PENDING',
-    dotColor: 'bg-yellow-500'
-  },
-  'approved': { 
-    color: 'text-green-800', 
-    bgColor: 'bg-green-100', 
-    text: 'APPROVED',
-    dotColor: 'bg-green-500'
-  },
-};
-
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ 
-  status, 
-  className = '' 
-}) => {
-  const config = statusConfig[status];
-  
   return (
-    <div className={`
-      inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium
-      ${config.color} ${config.bgColor} ${className}
-    `}>
-      <div className={`w-1.5 h-1.5 rounded-full ${config.dotColor}`} />
-      <span>{config.text}</span>
-    </div>
+    <span className={`inline-block w-25 px-1 py-1 text-center text-xs font-medium rounded-md uppercase tracking-tight leading-tight ${getStatusStyle(status)}`}>
+      {status === 'in-progress' ? 'in progress' : status}
+    </span>
   );
 };

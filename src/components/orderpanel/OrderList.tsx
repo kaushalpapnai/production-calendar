@@ -1,5 +1,6 @@
 import React from 'react';
 import { useOrderStore } from '../../store/orderStore';
+import { OrderListHeader } from './OrderListHeader';
 import { OrderItem } from './OrderItem';
 
 export const OrderList: React.FC = () => {
@@ -8,8 +9,118 @@ export const OrderList: React.FC = () => {
     selectedOrder, 
     setSelectedOrder, 
     statusFilter,
-    setStatusFilter 
+    setStatusFilter,
+    addOrder
   } = useOrderStore();
+
+  // Add sample orders if none exist (to match the image)
+  React.useEffect(() => {
+    if (orders.length === 0) {
+      const sampleOrders = [
+        {
+          orderNumber: 'F36FCFE1',
+          status: 'pending' as const,
+          startDate: new Date('2025-08-01'),
+          endDate: new Date('2025-08-04'),
+          duration: 4,
+          area: 'Manufacturing',
+          assignee: 'John Doe',
+          progress: 0,
+          colorCode: '#F59E0B'
+        },
+        {
+          orderNumber: 'EE844052',
+          status: 'pending' as const,
+          startDate: new Date('2025-08-05'),
+          endDate: new Date('2025-08-17'),
+          duration: 13,
+          area: 'Quality Control',
+          assignee: 'Jane Smith',
+          progress: 0,
+          colorCode: '#F59E0B'
+        },
+        {
+          orderNumber: '57AD32B9',
+          status: 'completed' as const,
+          startDate: new Date('2025-08-18'),
+          endDate: new Date('2025-08-19'),
+          duration: 2,
+          area: 'Shipping',
+          assignee: 'Bob Johnson',
+          progress: 100,
+          colorCode: '#10B981'
+        },
+        {
+          orderNumber: 'F8BF681E',
+          status: 'in-progress' as const,
+          startDate: new Date('2025-08-20'),
+          endDate: new Date('2025-09-02'),
+          duration: 14,
+          area: 'Production',
+          assignee: 'Alice Brown',
+          progress: 100,
+          colorCode: '#3B82F6'
+        },
+        {
+          orderNumber: '4CECAFA7',
+          status: 'in-progress' as const,
+          startDate: new Date('2025-08-21'),
+          endDate: new Date('2025-08-22'),
+          duration: 2,
+          area: 'Assembly',
+          assignee: 'Charlie Wilson',
+          progress: 0,
+          colorCode: '#3B82F6'
+        },
+        {
+          orderNumber: '4E87ECE5',
+          status: 'planned' as const,
+          startDate: new Date('2025-08-23'),
+          endDate: new Date('2025-08-23'),
+          duration: 1,
+          area: 'Packaging',
+          assignee: 'Diana Lee',
+          progress: 100,
+          colorCode: '#8B5CF6'
+        },
+        {
+          orderNumber: 'B831A322',
+          status: 'in-progress' as const,
+          startDate: new Date('2025-08-24'),
+          endDate: new Date('2025-08-24'),
+          duration: 1,
+          area: 'Testing',
+          assignee: 'Eve Davis',
+          progress: 100,
+          colorCode: '#3B82F6'
+        },
+        {
+          orderNumber: 'CFCDD6C5',
+          status: 'cancelled' as const,
+          startDate: new Date('2025-08-25'),
+          endDate: new Date('2025-08-25'),
+          duration: 0,
+          area: 'Review',
+          assignee: 'Frank Miller',
+          progress: 0,
+          colorCode: '#EF4444'
+        },
+        {
+          orderNumber: 'A3F6A261',
+          status: 'approved' as const,
+          startDate: new Date('2025-08-26'),
+          endDate: new Date('2025-08-26'),
+          duration: 1,
+          area: 'Final Check',
+          assignee: 'Grace Taylor',
+          progress: 0,
+          colorCode: '#10B981'
+        }
+      ];
+
+      sampleOrders.forEach(order => addOrder(order));
+    }
+  }, [orders.length, addOrder]);
 
   // Filter orders based on status filter
   const filteredOrders = statusFilter 
@@ -26,46 +137,14 @@ export const OrderList: React.FC = () => {
   };
 
   return (
-    <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full overflow-auto">
+    <div className="w-[40%] bg-white border-l border-gray-200 flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-900">Plan/Order</h3>
-          <div className="text-sm text-gray-500">
-            {filteredOrders.length} of {orders.length}
-          </div>
-        </div>
-
-        {/* Column Headers */}
-        <div className="flex items-center justify-between text-xs font-medium text-gray-500 uppercase tracking-wide">
-          <span className="flex-1">Status</span>
-          <span className="w-16 text-center">Duration</span>
-          <span className="w-20 text-center">Progress</span>
-        </div>
-
-        {/* Active Filter Display */}
-        {statusFilter && (
-          <div className="mt-2 flex items-center justify-between bg-blue-50 border border-blue-200 rounded px-3 py-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm font-medium text-blue-700 capitalize">
-                {statusFilter} orders
-              </span>
-            </div>
-            <button
-              onClick={clearFilter}
-              className="text-xs text-blue-600 hover:text-blue-800 underline"
-            >
-              Clear
-            </button>
-          </div>
-        )}
-      </div>
+      <OrderListHeader/>
 
       {/* Orders List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-white">
         {sortedOrders.length > 0 ? (
-          <div className="divide-y divide-gray-200">
+          <div>
             {sortedOrders.map((order, index) => (
               <OrderItem
                 key={order.id}
@@ -113,26 +192,6 @@ export const OrderList: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Footer Stats */}
-      {orders.length > 0 && (
-        <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <div>
-              <div className="text-lg font-semibold text-gray-900">
-                {orders.filter(o => o.status === 'completed').length}
-              </div>
-              <div className="text-xs text-gray-500">Completed</div>
-            </div>
-            <div>
-              <div className="text-lg font-semibold text-gray-900">
-                {orders.filter(o => o.status === 'in-progress').length}
-              </div>
-              <div className="text-xs text-gray-500">In Progress</div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

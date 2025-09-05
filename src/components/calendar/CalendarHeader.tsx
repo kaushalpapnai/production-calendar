@@ -60,7 +60,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   const currentFilter = statusOptions.find(option => option.value === statusFilter);
 
   return (
-    <div className="bg-white border-b border-gray-200">
+    <div className=" border-gray-200">
       <div className="px-6 py-4">
         {/* Top Row - Filters and Create Order */}
         <div className="flex items-center justify-between mb-4">

@@ -9,14 +9,14 @@ function App() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   return (
-    <div className="h-screen bg-gray-100">
+    <div className="h-screen bg-gray-100 overflow-scroll">
       <div className="h-full flex flex-col">
         <CalendarHeader
           onCreateOrder={() => setIsCreateModalOpen(true)}
           onToggleFilter={() => setIsFilterOpen(!isFilterOpen)}
         />
         
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex m-6 h-full">
           <div className="flex-1 overflow-auto">
             <CalendarGrid />
           </div>
