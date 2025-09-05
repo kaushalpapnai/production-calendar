@@ -1,4 +1,3 @@
-```markdown
 # 📅 Production Calendar
 
 A modern production planning calendar built with **React, TypeScript, and Tailwind CSS**.  
@@ -55,9 +54,9 @@ git clone https://github.com/your-username/production-calendar.git
 cd production-calendar
 npm install
 npm run dev
+```
 
 ### Build
-
 ```bash
 npm run build
 npm run preview
@@ -94,7 +93,6 @@ src/
 ├── store/                # Zustand state
 ├── types/                # TypeScript types
 ├── utils/                # Date utilities  
-
 ```
 
 ---
