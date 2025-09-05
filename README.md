@@ -1,5 +1,3 @@
-Perfect 👍 here’s a single clean **README.md** block you can directly copy-paste into your project:
-
 ````markdown
 # 📅 Production Calendar
 
@@ -112,7 +110,6 @@ src/
 
 ## 📸 Preview
 
-*(Replace with your actual screenshots/gif)*
 ![Main Calendar](https://github.com/kaushalpapnai/production-calendar/blob/master/project.png?raw=true)
 ![Weekly View](https://github.com/kaushalpapnai/production-calendar/blob/master/porject2.png?raw=true)
 ![Order Creation](https://github.com/kaushalpapnai/production-calendar/blob/master/project3.png?raw=true)
@@ -149,17 +146,4 @@ Contributions are welcome!
 
 ---
 
-## 📝 License
-
-MIT License © [Your Name](https://github.com/your-username)
-
----
-
-**Built with ❤️ for production teams**
-
-```
-
----
-
-Do you also want me to **shorten this README into a one-page recruiter/demo version** so it looks lighter when you showcase it in interviews?
-```
+**Built with ❤️ by kaushal papnai**
