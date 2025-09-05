@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useOrderStore } from '../../store/orderStore';
 import { OrderListHeader } from './OrderListHeader';
 import { OrderItem } from './OrderItem';
@@ -12,6 +12,8 @@ export const OrderList: React.FC = () => {
     setStatusFilter,
     addOrder
   } = useOrderStore();
+
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
   // Add sample orders if none exist (to match the image)
   React.useEffect(() => {
@@ -122,6 +124,17 @@ export const OrderList: React.FC = () => {
     }
   }, [orders.length, addOrder]);
 
+  const handleOrderClick = (orderId: string) => {
+    setSelectedOrder(orderId);
+    
+    // Toggle expanded state - if already expanded, collapse it
+    if (expandedOrder === orderId) {
+      setExpandedOrder(null);
+    } else {
+      setExpandedOrder(orderId);
+    }
+  };
+
   // Filter orders based on status filter
   const filteredOrders = statusFilter 
     ? orders.filter(order => order.status === statusFilter)
@@ -135,7 +148,6 @@ export const OrderList: React.FC = () => {
   const clearFilter = () => {
     setStatusFilter(null);
   };
-
 
   return (
     <div className="w-[40%] bg-white border-l border-gray-200 flex flex-col h-full">
@@ -151,8 +163,9 @@ export const OrderList: React.FC = () => {
                 key={order.id}
                 order={order}
                 isSelected={selectedOrder === order.id}
-                onClick={setSelectedOrder}
+                onClick={handleOrderClick}
                 index={index + 1}
+                isExpanded={expandedOrder === order.id}
               />
             ))}
           </div>

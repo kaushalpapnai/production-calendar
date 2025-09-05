@@ -1,5 +1,5 @@
+import React from 'react';
 import { StatusBadge } from "../UI/StatusBadge";
-
 
 const ProgressCircle: React.FC<{ progress: number; status: string }> = ({ progress, status }) => {
   const getCircleColor = (status: string) => {
@@ -51,37 +51,91 @@ export const OrderItem: React.FC<{
   isSelected: boolean;
   onClick: (id: string) => void;
   index: number;
-}> = ({ order, isSelected, onClick, index }) => {
+  isExpanded: boolean;
+}> = ({ order, isSelected, onClick, index, isExpanded }) => {
+  // Extract only the order number part (after the space)
+  const getOrderNumberOnly = (fullOrderNumber: string) => {
+    const parts = fullOrderNumber.split(' ');
+    return parts[1] || fullOrderNumber; // Return the part after space, or full string if no space
+  };
+
+  // Format date for display
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   return (
     <div
-      className={`grid grid-cols-4 gap-4 p-4 cursor-pointer hover:bg-gray-50 border-b border-gray-100 ${
-        isSelected ? 'bg-blue-50 border-l-4 border-l-gray-500' : ''
+      className={`cursor-pointer border-b border-gray-100 ${
+        isSelected ? 'bg-blue-50 border-l-4 border-l-gray-500' : 'bg-white'
       }`}
       onClick={() => onClick(order.id)}
     >
-      {/* Plan/Order */}
-      <div className="flex items-center space-x-2">
-        <span className="text-sm text-gray-500">#{index}</span>
-        <span className="text-sm font-medium text-gray-900">{order.orderNumber}</span>
+      {/* Main order info row */}
+      <div className="grid grid-cols-4 gap-4 p-4">
+        {/* Plan/Order - Show only order number without prefix */}
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-500">#{index}</span>
+          <span className="text-sm font-medium text-gray-900">
+            {getOrderNumberOnly(order.orderNumber)}
+          </span>
+        </div>
+
+        {/* Status */}
+        <div className="flex justify-center">
+          <StatusBadge status={order.status} />
+        </div>
+
+        {/* Duration */}
+        <div className="flex justify-center">
+          <span className="text-sm text-gray-600">
+            {order.duration} day{order.duration !== 1 ? 's' : ''}
+          </span>
+        </div>
+
+        {/* Progress */}
+        <div className="flex justify-center items-center space-x-2">
+          <span className="text-sm text-gray-600 w-8 text-right">{order.progress}%</span>
+          <ProgressCircle progress={order.progress} status={order.status} />
+        </div>
       </div>
 
-      {/* Status */}
-      <div className="flex justify-center">
-        <StatusBadge status={order.status} />
-      </div>
-
-      {/* Duration */}
-      <div className="flex justify-center">
-        <span className="text-sm text-gray-600">
-          {order.duration} day{order.duration !== 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {/* Progress */}
-      <div className="flex justify-center items-center space-x-2">
-        <span className="text-sm text-gray-600 w-8 text-right">{order.progress}</span>
-        <ProgressCircle progress={order.progress} status={order.status} />
-      </div>
+      {/* Expanded details section - Simplified */}
+      {isExpanded && (
+        <div className="px-4 pb-4 bg-gray-50 border-t border-gray-100">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Start Date:</span>
+                <span className="font-medium">{formatDate(order.startDate)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">End Date:</span>
+                <span className="font-medium">{formatDate(order.endDate)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Duration:</span>
+                <span className="font-medium">{order.duration} day{order.duration !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Area:</span>
+                <span className="font-medium">{order.area}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Assignee:</span>
+                <span className="font-medium">{order.assignee}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
